@@ -1,0 +1,29 @@
+{
+  "name": "drm-wrap-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DRM-Wrap: npm CLI + secure Electron desktop app generator with anti-screen-capture and DRM features",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "node node_modules/electron/install.js && (xattr -cr node_modules/electron/dist/Electron.app 2>/dev/null || true) && (codesign --force --deep --sign - node_modules/electron/dist/Electron.app 2>/dev/null || true)",
+    "build": "npm run build --workspace=@vecvel/drm-wrap",
+    "dev": "npm run dev --workspace=drm-wrap-desktop-app",
+    "dev:studio": "npm run dev --workspace=drm-wrap-studio",
+    "typecheck": "npm run typecheck --workspace=@vecvel/drm-wrap",
+    "lint": "npm run lint --workspaces --if-present",
+    "license:issue": "node packages/license-admin/scripts/issue-license.js",
+    "license:keygen": "node packages/license-admin/scripts/keygen.js",
+    "license:gui": "open tools/license-generator.html"
+  },
+  "author": "vecvel",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vecvel/drm-wrap.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "Proprietary"
+}

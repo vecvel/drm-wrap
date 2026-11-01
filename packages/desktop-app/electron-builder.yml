@@ -1,0 +1,44 @@
+appId: com.drmwrap.app
+productName: My Secure Portal
+copyright: Copyright © 2026 vecvel. All rights reserved.
+electronVersion: 31.7.7
+npmRebuild: false
+directories:
+  output: release
+  buildResources: public
+files:
+  - electron/**/*
+  - public/**/*
+  - drm-wrap.config.json
+  - node_modules/**/*
+  - package.json
+asar: true
+mac:
+  category: public.app-category.business
+  icon: public/logo.icns
+  minimumSystemVersion: "12.0"
+  gatekeeperAssess: false
+  target:
+    - target: dmg
+      arch:
+        - universal
+    - target: zip
+      arch:
+        - universal
+win:
+  icon: public/logo.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+    - target: zip
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

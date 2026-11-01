@@ -1,0 +1,103 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  # Runs on every push/PR: fast correctness check, no packaging.
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck --workspace=@vecvel/drm-wrap
+      - run: npm run build --workspace=@vecvel/drm-wrap
+
+  # Produces real installers: .exe/.portable on Windows, .dmg/.zip on macOS,
+  # each built natively on that OS (electron-builder needs Wine to cross-build
+  # Windows targets from macOS/Linux, so we don't bother — a native runner is
+  # simpler and matches what electron-builder itself recommends).
+  build-desktop-app:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            electron-builder-args: --win
+          - os: macos-latest
+            electron-builder-args: --mac
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace=@vecvel/drm-wrap
+
+      - name: Package desktop app
+        working-directory: packages/desktop-app
+        # CSC_IDENTITY_AUTO_DISCOVERY=false: without this, electron-builder
+        # tries (and fails) to auto-discover a macOS code-signing identity on
+        # runners that don't have one configured. Add CSC_LINK/CSC_KEY_PASSWORD
+        # (mac) and WIN_CSC_LINK/WIN_CSC_KEY_PASSWORD (windows) repo secrets,
+        # and drop this env var, once you have real signing certificates —
+        # see DRMwrap.md §7.3 (code signing is mandatory before shipping).
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder ${{ matrix.electron-builder-args }} --config electron-builder.yml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-app-${{ matrix.os }}
+          path: |
+            packages/desktop-app/release/**/*.exe
+            packages/desktop-app/release/**/*.dmg
+            packages/desktop-app/release/**/*.zip
+          if-no-files-found: error
+
+  # DRM-Wrap Studio is itself a distributable desktop app — the GUI end users
+  # install once, then use to build their own apps without a terminal.
+  build-studio:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            electron-builder-args: --win
+          - os: macos-latest
+            electron-builder-args: --mac
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace=@vecvel/drm-wrap
+
+      - name: Package Studio
+        working-directory: packages/studio
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder ${{ matrix.electron-builder-args }} --config electron-builder.yml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-${{ matrix.os }}
+          path: |
+            packages/studio/release/**/*.exe
+            packages/studio/release/**/*.dmg
+            packages/studio/release/**/*.zip
+          if-no-files-found: error

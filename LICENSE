@@ -1,0 +1,33 @@
+PROPRIETARY SOFTWARE LICENSE & TERMS OF USE
+
+Copyright (c) 2026 vecvel (https://github.com/vecvel). All Rights Reserved.
+
+IMPORTANT — READ CAREFULLY:
+This Proprietary Software License Agreement ("Agreement") is a legal agreement between you (either an individual or a single entity) and vecvel ("Author", "Licensor") for the DRM-Wrap software suite, including all source code, binaries, libraries, templates, scripts, tooling, and documentation (collectively, the "Software").
+
+1. GRANT OF LICENSE
+Subject to the terms and conditions of this Agreement, Licensor grants you a non-exclusive, non-transferable, revocable license to install, execute, and use the Software strictly in accordance with the purchased or issued license tier:
+  (a) Single Application License: Permits creating, configuring, and building desktop app wrappers for one (1) single website or client domain.
+  (b) Extended License: Permits creating, configuring, and building desktop app wrappers for multiple websites, client domains, and commercial enterprise deployments as authorized by the Licensor.
+
+2. RESTRICTIONS
+You may NOT:
+  (a) Sub-license, resell, rent, lease, distribute, publish, or publicly broadcast the Software's source code, private cryptographic keys, or proprietary generator tooling without express written authorization from Licensor;
+  (b) Reverse-engineer, decompile, disassemble, or attempt to derive the private cryptographic signing keys, algorithms, or proprietary tamper-detection mechanisms;
+  (c) Remove, alter, or obscure any proprietary notices, labels, digital signatures, or copyright marks on or within the Software;
+  (d) Forge, bypass, or tamper with the cryptographic licensing validation, token verification, hardware binding, or quota verification mechanisms;
+  (e) Use the Software in any manner that violates applicable local, state, national, or international laws or regulations.
+
+3. INTELLECTUAL PROPERTY & OWNERSHIP
+The Software, including its code structure, architecture, design, cryptographic schemes, documentation, and user interfaces, is and remains the sole and exclusive intellectual property of vecvel. All rights not expressly granted to you under this Agreement are reserved by vecvel.
+
+4. DISCLAIMER OF WARRANTIES
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+5. TERMINATION
+This Agreement is effective until terminated. Your rights under this License will terminate automatically without notice from Licensor if you fail to comply with any term(s) of this Agreement. Upon termination, you must cease all use of the Software and destroy all copies, full or partial, of the Software.
+
+For licensing inquiries, extended commercial agreements, or enterprise partnerships, contact:
+Author: vecvel
+Email: support@vecvel.com
+GitHub: https://github.com/vecvel

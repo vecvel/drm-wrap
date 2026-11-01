@@ -1,0 +1,141 @@
+name: Generate Customer License
+
+on:
+  workflow_dispatch:
+    inputs:
+      customer:
+        description: 'Customer / Organization Name (e.g. Acme Corp)'
+        required: true
+        type: string
+      email:
+        description: 'Customer Contact Email (e.g. dev@acme.com)'
+        required: true
+        type: string
+      tier:
+        description: 'License Tier'
+        required: true
+        type: choice
+        options:
+          - single
+          - extended
+        default: single
+      domain:
+        description: 'Domain Lock (Optional, e.g. acme.com — leave empty for unrestricted)'
+        required: false
+        type: string
+        default: ''
+      license_type:
+        description: 'License Validity Type'
+        required: true
+        type: choice
+        options:
+          - subscription
+          - lifetime
+          - trial
+        default: subscription
+      days:
+        description: 'Validity Period in Days (for subscription or trial)'
+        required: false
+        type: string
+        default: '365'
+      private_key:
+        description: 'Developer Ed25519 Private Key (PKCS#8 PEM). Leave blank if stored in Secret LICENSE_PRIVATE_KEY'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  generate:
+    name: Generate & Sign License
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure Developer Private Key
+        env:
+          INPUT_KEY: ${{ github.event.inputs.private_key }}
+          SECRET_KEY: ${{ secrets.LICENSE_PRIVATE_KEY }}
+        run: |
+          mkdir -p .license-keys
+          if [ -n "$INPUT_KEY" ]; then
+            echo "$INPUT_KEY" > .license-keys/private.pem
+          elif [ -n "$SECRET_KEY" ]; then
+            echo "$SECRET_KEY" > .license-keys/private.pem
+          else
+            echo "::error::Private key was not provided in inputs and secret LICENSE_PRIVATE_KEY is not configured."
+            exit 1
+          fi
+          chmod 600 .license-keys/private.pem
+
+      - name: Generate Signed Software License
+        id: generate
+        run: |
+          CUSTOMER="${{ github.event.inputs.customer }}"
+          EMAIL="${{ github.event.inputs.email }}"
+          TIER="${{ github.event.inputs.tier }}"
+          DOMAIN="${{ github.event.inputs.domain }}"
+          TYPE="${{ github.event.inputs.license_type }}"
+          DAYS="${{ github.event.inputs.days }}"
+          SAFE_NAME=$(echo "$CUSTOMER" | tr -c '[:alnum:]_-' '_')
+          LIC_FILE="${SAFE_NAME}_DRMWrap_License.lic"
+
+          CMD="node packages/license-admin/scripts/issue-license.js --customer \"$CUSTOMER\" --email \"$EMAIL\" --tier \"$TIER\" --private-key .license-keys/private.pem --out \"$LIC_FILE\""
+
+          if [ -n "$DOMAIN" ]; then
+            CMD="$CMD --domain \"$DOMAIN\""
+          fi
+
+          if [ "$TYPE" = "lifetime" ]; then
+            CMD="$CMD --lifetime"
+          elif [ "$TYPE" = "trial" ]; then
+            CMD="$CMD --trial $DAYS"
+          else
+            CMD="$CMD --days $DAYS"
+          fi
+
+          eval $CMD
+
+      - name: Publish Step Summary
+        run: |
+          LIC_FILE=$(ls *_DRMWrap_License.lic 2>/dev/null | head -n 1)
+          if [ -f "$LIC_FILE" ]; then
+            TOKEN=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).token)' "$LIC_FILE")
+            echo "### 🛡️ DRM-Wrap Software License Generated Successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Customer** | ${{ github.event.inputs.customer }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Email** | ${{ github.event.inputs.email }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Tier** | ${{ github.event.inputs.tier }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Domain** | ${{ github.event.inputs.domain || 'Any (Unrestricted)' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Validity** | ${{ github.event.inputs.license_type }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **License File** | \`$LIC_FILE\` (Download below in Artifacts) |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### 🔑 Activation Key Token (Send to Customer):" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+            echo "$TOKEN" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### 💻 CLI Activation Command:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "npx drm-wrap license activate \"$TOKEN\"" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload .lic License File as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.customer }}-License
+          path: '*_DRMWrap_License.lic'
+          retention-days: 30
+
+      - name: Cleanup Private Key from Runner
+        if: always()
+        run: |
+          rm -rf .license-keys/

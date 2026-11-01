@@ -1,0 +1,10 @@
+{
+  "name": "drm-wrap-license-admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vendor-only tooling to generate the license signing keypair and issue signed license keys for drm-wrap. Never published; keeps the private key out of the drm-wrap package entirely.",
+  "scripts": {
+    "keygen": "node scripts/keygen.js",
+    "issue": "node scripts/issue-license.js"
+  }
+}

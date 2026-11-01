@@ -1,0 +1,19 @@
+{
+  "name": "drm-wrap-desktop-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DRM-Wrap generated Electron desktop app template (also doubles as the monorepo's live dev/demo app).",
+  "author": "vecvel",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development electron .",
+    "start": "electron .",
+    "package": "electron-builder --config electron-builder.yml"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  }
+}

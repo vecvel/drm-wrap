@@ -1,0 +1,282 @@
+name: Build & Publish Desktop Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.0.3)'
+        required: true
+        default: 'v1.0.3'
+
+permissions:
+  contents: write
+  packages: write
+
+# ---------------------------------------------------------------------------
+# Required GitHub Secrets
+# ---------------------------------------------------------------------------
+# CSC_LINK                    Base64-encoded Developer ID Application .p12
+# CSC_KEY_PASSWORD            Password used when exporting the .p12
+# APPLE_ID                    Apple ID email for notarization
+# APPLE_APP_SPECIFIC_PASSWORD App-specific password from appleid.apple.com
+# APPLE_TEAM_ID               10-char Apple Team ID (e.g. 63LNPXAB49)
+# ---------------------------------------------------------------------------
+
+jobs:
+  # --------------------------------------------------------------------------
+  build-mac:
+    name: Build macOS Universal (signed)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Core Engine & Packages
+        run: npm run build
+
+      # Pre-create keychain and import cert so electron-builder uses ours
+      # (via CSC_KEYCHAIN) rather than creating its own. electron-builder's
+      # own keychain creation fails on modern macOS runners with
+      # "SecKeychainUnlock: passphrase incorrect" on set-key-partition-list.
+      - name: Setup Signing Keychain
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          if [ -z "$CSC_LINK" ]; then
+            echo "No CSC_LINK secret — skipping keychain setup."
+            exit 0
+          fi
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 20)"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> "$GITHUB_ENV"
+
+          # Create & unlock keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Decode & import cert — -A: allow any app access without UI prompt
+          echo "$CSC_LINK" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CSC_KEY_PASSWORD" \
+            -T /usr/bin/codesign -A
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+          # Unlock again after import (macOS may re-lock it)
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Allow codesign to use the key without confirmation
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Add to the user's keychain search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH" \
+            $(security list-keychain -d user | tr -d '"')
+
+          echo "Keychain ready at $KEYCHAIN_PATH"
+
+      # CSC_KEYCHAIN tells electron-builder to use our pre-imported cert.
+      # Do NOT set CSC_LINK here — it would trigger electron-builder's own
+      # keychain creation which conflicts with ours.
+      - name: Package DRMWrap Studio (macOS Universal)
+        env:
+          CSC_KEYCHAIN: ${{ env.KEYCHAIN_PATH }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          OPTS="--publish never"
+          if [ -n "$CSC_KEYCHAIN" ]; then
+            OPTS="$OPTS -c.mac.hardenedRuntime=true"
+            OPTS="$OPTS -c.mac.entitlements=build/entitlements.mac.plist"
+            OPTS="$OPTS -c.mac.entitlementsInherit=build/entitlements.mac.inherit.plist"
+          else
+            OPTS="$OPTS -c.mac.hardenedRuntime=false -c.mac.identity=null"
+          fi
+          if [ -n "$APPLE_APP_SPECIFIC_PASSWORD" ] && [ -n "$CSC_KEYCHAIN" ]; then
+            OPTS="$OPTS -c.mac.notarize.teamId=${APPLE_TEAM_ID:-63LNPXAB49}"
+          else
+            OPTS="$OPTS -c.mac.notarize=false"
+          fi
+          npm run package --workspace=drm-wrap-studio -- $OPTS
+
+      - name: Package Desktop App (macOS Universal)
+        env:
+          CSC_KEYCHAIN: ${{ env.KEYCHAIN_PATH }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          OPTS="--publish never"
+          if [ -n "$CSC_KEYCHAIN" ]; then
+            OPTS="$OPTS -c.mac.hardenedRuntime=true"
+            OPTS="$OPTS -c.mac.entitlements=build/entitlements.mac.plist"
+            OPTS="$OPTS -c.mac.entitlementsInherit=build/entitlements.mac.inherit.plist"
+          else
+            OPTS="$OPTS -c.mac.hardenedRuntime=false -c.mac.identity=null"
+          fi
+          if [ -n "$APPLE_APP_SPECIFIC_PASSWORD" ] && [ -n "$CSC_KEYCHAIN" ]; then
+            OPTS="$OPTS -c.mac.notarize.teamId=${APPLE_TEAM_ID:-63LNPXAB49}"
+          else
+            OPTS="$OPTS -c.mac.notarize=false"
+          fi
+          npm run package --workspace=drm-wrap-desktop-app -- $OPTS
+
+      - name: Cleanup Keychain
+        if: always()
+        run: |
+          if [ -n "$KEYCHAIN_PATH" ] && [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          fi
+
+      - name: Collect macOS Artifacts
+        run: |
+          mkdir -p dist-release
+          cp packages/studio/release/*.dmg dist-release/ 2>/dev/null || true
+          cp packages/studio/release/*.zip dist-release/ 2>/dev/null || true
+          cp packages/studio/release/*.blockmap dist-release/ 2>/dev/null || true
+          cp packages/desktop-app/release/*.dmg dist-release/ 2>/dev/null || true
+          cp packages/desktop-app/release/*.zip dist-release/ 2>/dev/null || true
+          cp packages/desktop-app/release/*.blockmap dist-release/ 2>/dev/null || true
+          ls -lh dist-release/
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-mac
+          path: |
+            dist-release/*.dmg
+            dist-release/*.zip
+            dist-release/*.blockmap
+
+  # --------------------------------------------------------------------------
+  build-win:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Core Engine & Packages
+        run: npm run build
+
+      - name: Package DRMWrap Studio (Windows)
+        run: npm run package --workspace=drm-wrap-studio -- --win --publish never
+
+      - name: Package Desktop App (Windows)
+        run: npm run package --workspace=drm-wrap-desktop-app -- --win --publish never
+
+      - name: Collect Windows Artifacts
+        shell: bash
+        run: |
+          mkdir -p dist-release
+          cp packages/studio/release/*.exe dist-release/ 2>/dev/null || true
+          cp packages/studio/release/*.zip dist-release/ 2>/dev/null || true
+          cp packages/studio/release/*.blockmap dist-release/ 2>/dev/null || true
+          cp packages/desktop-app/release/*.exe dist-release/ 2>/dev/null || true
+          cp packages/desktop-app/release/*.zip dist-release/ 2>/dev/null || true
+          cp packages/desktop-app/release/*.blockmap dist-release/ 2>/dev/null || true
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-win
+          path: |
+            dist-release/*.exe
+            dist-release/*.zip
+            dist-release/*.blockmap
+
+  # --------------------------------------------------------------------------
+  release:
+    name: Publish GitHub Release
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Core Engine & Packages
+        run: npm run build
+
+      - name: Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-dist
+          merge-multiple: true
+
+      - name: Pack npm package tarball
+        run: npm pack --workspace=@vecvel/drm-wrap --pack-destination release-dist
+
+      - name: Publish npm package to GitHub Packages
+        run: |
+          npm config set //npm.pkg.github.com/:_authToken "${{ secrets.GITHUB_TOKEN }}"
+          npm publish --workspace=@vecvel/drm-wrap || echo "Package already published at this version."
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine Release Tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "RELEASE_TAG=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "DRMWrap ${{ env.RELEASE_TAG }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release-dist/*.dmg
+            release-dist/*.exe
+            release-dist/*.zip
+            release-dist/*.blockmap
+            release-dist/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

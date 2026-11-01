@@ -1,0 +1,30 @@
+{
+  "appName": "My Secure Portal",
+  "baseUrl": "public/demo/index.html",
+  "version": "1.0.0",
+  "features": {
+    "fullProtection": true,
+    "selectiveProtection": true,
+    "detectScreenRecording": true,
+    "detectSnippingTools": true,
+    "invisibleMode": true,
+    "autoInvisibleMode": false,
+    "dynamicWatermark": true,
+    "watermarkOpacity": 0.12
+  },
+  "window": {
+    "width": 1440,
+    "height": 900,
+    "minWidth": 1024,
+    "minHeight": 700,
+    "center": true
+  },
+  "build": {
+    "windows": {
+      "target": ["nsis", "portable"]
+    },
+    "mac": {
+      "target": ["dmg", "zip"]
+    }
+  }
+}
