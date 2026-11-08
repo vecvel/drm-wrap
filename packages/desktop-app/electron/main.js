@@ -17,6 +17,7 @@ const { sendBlankSignal, sendUnblankSignal } = require("./protection/overlay");
 const { startWatermarkRefresh } = require("./protection/watermark");
 const { DetectionEngine } = require("./detection/engine");
 const { InvisibleModeManager } = require("./invisible-mode");
+const { readWindowState, setupDesktopShell, claimSingleInstance } = require("./desktop-shell");
 const signatureDatabase = require("./detection/signatures.json");
 
 const APP_ROOT = app.getAppPath();
@@ -77,22 +78,44 @@ function registerHotkeyDetection(onEvent) {
   };
 }
 
+let mainWindow = null;
+
 function createWindow(config) {
+  const state = readWindowState(config.window);
   const win = new BrowserWindow({
-    width: config.window.width,
-    height: config.window.height,
+    x: state.x,
+    y: state.y,
+    width: state.width,
+    height: state.height,
     minWidth: config.window.minWidth,
     minHeight: config.window.minHeight,
-    center: config.window.center,
+    center: state.x === undefined && config.window.center,
     title: config.appName,
     icon: path.join(APP_ROOT, "public", "logo.png"),
+    backgroundColor: config.window.backgroundColor || "#ffffff",
+    show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // DevTools only while developing; installed builds can't open them.
+      devTools: !app.isPackaged,
     },
   });
+  mainWindow = win;
+
+  // Show the window on first paint instead of a blank frame, but don't keep
+  // the user waiting on a slow site: after a moment show the background colour.
+  const reveal = () => {
+    if (win.isDestroyed() || win.isVisible()) return;
+    if (state.isMaximized) win.maximize();
+    win.show();
+  };
+  win.once("ready-to-show", reveal);
+  setTimeout(reveal, 1500);
+  setupDesktopShell(win, config);
 
   const isRemote = /^https?:\/\//i.test(config.baseUrl);
   if (isRemote) {
@@ -108,12 +131,12 @@ function createWindow(config) {
   return win;
 }
 
-function createTray(win, invisibleModeManager) {
+function createTray(win, invisibleModeManager, appName) {
   const trayIcon = nativeImage
     .createFromPath(path.join(APP_ROOT, "public", "logo.png"))
     .resize({ width: 16, height: 16 });
   const tray = new Tray(trayIcon);
-  tray.setToolTip("DRM-Wrap");
+  tray.setToolTip(appName);
 
   const rebuildMenu = () => {
     tray.setContextMenu(
@@ -252,7 +275,7 @@ class DrmWrapRuntime {
         }
         logEvent(`invisible-mode ${state.active ? "on" : "off"} (${state.reason ?? "n/a"})`);
       });
-      this.tray = createTray(this.win, this.invisibleModeManager);
+      this.tray = createTray(this.win, this.invisibleModeManager, config.appName);
     }
 
     if (!this.win.isDestroyed() && this.win.webContents && !this.win.webContents.isDestroyed()) {
@@ -270,8 +293,22 @@ process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
 });
 
+const isPrimaryInstance = claimSingleInstance(() => mainWindow);
+if (!isPrimaryInstance) {
+  app.quit();
+}
+
 app.whenReady().then(() => {
+  if (!isPrimaryInstance) return;
   const config = loadConfig(APP_ROOT);
+  if (process.platform === "win32") {
+    // Must match the appId electron-builder gives the installer's shortcuts,
+    // so the taskbar groups the app and notifications show its name.
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(APP_ROOT, "package.json"), "utf8"));
+      app.setAppUserModelId(`com.drmwrap.${pkg.name}`);
+    } catch {}
+  }
   const win = createWindow(config);
 
   if (process.platform === "darwin" && app.dock) {

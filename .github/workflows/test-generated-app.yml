@@ -1,0 +1,54 @@
+name: Test Generated App
+
+# Builds a desktop app from the template the way DRMWrap Studio does, on
+# Windows and macOS, and launches it to check it starts.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/desktop-app/**'
+      - 'packages/lib/**'
+      - 'packages/studio/electron/**'
+      - '.github/scripts/test-generated-app.js'
+      - '.github/workflows/test-generated-app.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  generated-app:
+    name: Generate, build and launch (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Core Engine & Template
+        run: npm run build
+
+      - name: Generate, build and launch a test app
+        run: node .github/scripts/test-generated-app.js
+
+      - name: Upload Installers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-app-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/drm wrap test/CI Test App/release/*.exe
+            ${{ runner.temp }}/drm wrap test/CI Test App/release/*.dmg
+          if-no-files-found: ignore
+          retention-days: 7

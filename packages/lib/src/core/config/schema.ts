@@ -37,6 +37,8 @@ export const windowConfigSchema = z.object({
   minWidth: z.number().int().positive().default(1024),
   minHeight: z.number().int().positive().default(700),
   center: z.boolean().default(true),
+  /** Shown while the page loads, so the window never flashes white on a dark site. */
+  backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#ffffff"),
 });
 
 export const buildConfigSchema = z.object({

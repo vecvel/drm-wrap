@@ -22,6 +22,7 @@ export interface WindowConfig {
   minWidth: number;
   minHeight: number;
   center: boolean;
+  backgroundColor: string;
 }
 
 export interface WindowsBuildConfig {

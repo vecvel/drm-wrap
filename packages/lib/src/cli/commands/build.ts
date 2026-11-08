@@ -2,13 +2,14 @@ import { spawn } from "node:child_process";
 import chalk from "chalk";
 import type { Command } from "commander";
 import { loadConfig } from "../../core/config/schema";
+import { prepareWindowsBuildTools } from "../../core/windows-build-tools";
 import { requireLicense } from "../require-license";
 
 export function registerBuildCommand(program: Command): void {
   program
     .command("build")
     .description("Package the app for Windows and macOS via electron-builder")
-    .action(() => {
+    .action(async () => {
       let config;
       try {
         config = loadConfig(process.cwd());
@@ -23,6 +24,13 @@ export function registerBuildCommand(program: Command): void {
       console.log(chalk.cyan(`Building "${config.appName}"...`));
       console.log(chalk.cyan(`  Windows targets: ${config.build.windows.target.join(", ")}`));
       console.log(chalk.cyan(`  macOS targets: ${config.build.mac.target.join(", ")}`));
+
+      try {
+        await prepareWindowsBuildTools(process.cwd(), (line) => process.stdout.write(line));
+      } catch (error) {
+        console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+        process.exit(1);
+      }
 
       const child = spawn(
         "npx",

@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const fsExtra = require("fs-extra");
 const { spawn, execFileSync } = require("node:child_process");
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu, nativeImage } = require("electron");
 const {
   getActiveLicense,
   activateLicense,
@@ -15,6 +15,7 @@ const {
   saveConfig,
   personalizeGeneratedProject,
   applyLogoToProject,
+  prepareWindowsBuildTools,
 } = require("@vecvel/drm-wrap/core");
 
 let mainWindow = null;
@@ -114,6 +115,18 @@ function unquarantinePath(targetPath) {
   } catch {
     return false;
   }
+}
+
+// electron-builder needs a real PNG of at least 256x256 for the Windows icon,
+// so whatever image was picked is re-encoded as a 512x512 PNG first.
+function normalizeLogo(logoPath) {
+  const image = nativeImage.createFromPath(logoPath);
+  if (image.isEmpty()) {
+    throw new Error(`Could not read ${path.basename(logoPath)} as an image.`);
+  }
+  const out = path.join(os.tmpdir(), `drm-wrap-logo-${Date.now()}.png`);
+  fs.writeFileSync(out, image.resize({ width: 512, height: 512, quality: "best" }).toPNG());
+  return out;
 }
 
 function sendLog(task, stream, data) {
@@ -256,10 +269,13 @@ function runTask(task, cwd, command, args, extraEnv = {}) {
   }
 
   runningTask = task;
+  // No shell here: these tasks run an executable directly. On Windows a shell
+  // would join the arguments unquoted, splitting the -e script and any path
+  // that contains spaces.
   const child = spawn(command, args, {
     cwd,
-    shell: process.platform === "win32",
     env: { ...getExtendedEnv(), ...extraEnv },
+    windowsHide: true,
   });
   runningProcess = child;
 
@@ -314,6 +330,9 @@ function registerIpcHandlers() {
 
   ipcMain.handle("studio:project:scaffold", async (_event, options) => {
     checkLicenseOrThrow(options.baseUrl);
+    if (options.logoPath) {
+      options = { ...options, logoPath: normalizeLogo(options.logoPath) };
+    }
     return scaffoldProject(options);
   });
 
@@ -343,7 +362,7 @@ function registerIpcHandlers() {
       }
       chosen = result.filePaths[0];
     }
-    await applyLogoToProject(targetDir, chosen);
+    await applyLogoToProject(targetDir, normalizeLogo(chosen));
     return { success: true, logoPath: path.join(targetDir, "public", "logo.png") };
   });
 
@@ -383,10 +402,14 @@ function registerIpcHandlers() {
     return { stopped: false };
   });
 
-  ipcMain.handle("studio:project:build", (_event, targetDir) => {
+  ipcMain.handle("studio:project:build", async (_event, targetDir) => {
+    if (runningProcess || runningTask) {
+      throw new Error(`A "${runningTask}" task is already running.`);
+    }
     const config = loadConfig(targetDir);
     checkLicenseOrThrow(config.baseUrl);
     const cliPath = resolveVendoredElectronBuilderCli(targetDir);
+    await prepareWindowsBuildTools(targetDir, (line) => sendLog("build", "stdout", line));
     // electron-builder is a Node CLI; run it under DRMWrap's own bundled
     // Electron binary in "plain Node" mode instead of requiring a system
     // Node.js install (see ELECTRON_RUN_AS_NODE in Electron's docs).

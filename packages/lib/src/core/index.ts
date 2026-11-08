@@ -14,3 +14,4 @@ import signatureDatabaseJson from "./detection/signatures.json";
 import type { SignatureDatabase } from "./types";
 
 export const signatureDatabase = signatureDatabaseJson as SignatureDatabase;
+export * from "./windows-build-tools";
