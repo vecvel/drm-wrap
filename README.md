@@ -27,16 +27,16 @@ Turn an existing website into a locked-down desktop app for Windows and macOS. P
 
 ## Download
 
-DRMWrap Studio is the desktop app: it does everything the CLI does, without a terminal. The links below are for the current release, 1.0.0.
+DRMWrap Studio is the desktop app: it does everything the CLI does, without a terminal. These links always download the latest release.
 
 | Platform | Download | Notes |
 |---|---|---|
-| macOS (Apple silicon and Intel) | [DRMWrap-1.0.0-universal.dmg](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-1.0.0-universal.dmg) | macOS 12 or later |
-| macOS (Apple silicon and Intel) | [DRMWrap-1.0.0-universal-mac.zip](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-1.0.0-universal-mac.zip) | Same app as a zip |
-| Windows x64 | [DRMWrap.Setup.1.0.0.exe](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap.Setup.1.0.0.exe) | Installer |
-| Windows x64 | [DRMWrap.1.0.0.exe](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap.1.0.0.exe) | Portable, no install |
-| Windows x64 | [DRMWrap-1.0.0-win.zip](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-1.0.0-win.zip) | Zip |
-| CLI (Node.js 20+) | [`@vecvel/drm-wrap`](https://github.com/vecvel/drm-wrap/pkgs/npm/drm-wrap) | `npx @vecvel/drm-wrap init`, or grab the [tarball](https://github.com/vecvel/drm-wrap/releases/latest/download/vecvel-drm-wrap-1.0.0.tgz) |
+| macOS (Apple silicon and Intel) | [DRMWrap-mac-universal.dmg](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-mac-universal.dmg) | macOS 12 or later |
+| macOS (Apple silicon and Intel) | [DRMWrap-mac-universal.zip](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-mac-universal.zip) | Same app as a zip |
+| Windows x64 | [DRMWrap-Setup-win-x64.exe](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-Setup-win-x64.exe) | Installer |
+| Windows x64 | [DRMWrap-Portable-win-x64.exe](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-Portable-win-x64.exe) | Portable, no install |
+| Windows x64 | [DRMWrap-win-x64.zip](https://github.com/vecvel/drm-wrap/releases/latest/download/DRMWrap-win-x64.zip) | Zip |
+| CLI (Node.js 20+) | [`@vecvel/drm-wrap`](https://github.com/vecvel/drm-wrap/pkgs/npm/drm-wrap) | `npx @vecvel/drm-wrap init`, or grab the [tarball](https://github.com/vecvel/drm-wrap/releases/latest/download/drm-wrap-cli.tgz) |
 
 Every file, including the demo app builds, is on the [releases page](https://github.com/vecvel/drm-wrap/releases/latest).
 

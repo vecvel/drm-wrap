@@ -28,7 +28,10 @@ extraResources:
       - "!**/dist/**"
       - "!**/release/**"
 asar: true
+# Fixed file names (no version) so the README's releases/latest/download
+# links keep working for every release.
 mac:
+  artifactName: DRMWrap-mac-${arch}.${ext}
   category: public.app-category.developer-tools
   icon: public/logo.icns
   hardenedRuntime: true
@@ -46,6 +49,7 @@ mac:
       arch:
         - universal
 win:
+  artifactName: DRMWrap-win-${arch}.${ext}
   icon: public/logo.png
   target:
     - target: nsis
@@ -57,7 +61,10 @@ win:
     - target: zip
       arch:
         - x64
+portable:
+  artifactName: DRMWrap-Portable-win-${arch}.${ext}
 nsis:
+  artifactName: DRMWrap-Setup-win-${arch}.${ext}
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true

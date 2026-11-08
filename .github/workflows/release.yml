@@ -154,9 +154,13 @@ jobs:
           cp packages/studio/release/*.dmg dist-release/ 2>/dev/null || true
           cp packages/studio/release/*.zip dist-release/ 2>/dev/null || true
           cp packages/studio/release/*.blockmap dist-release/ 2>/dev/null || true
-          cp packages/desktop-app/release/*.dmg dist-release/ 2>/dev/null || true
-          cp packages/desktop-app/release/*.zip dist-release/ 2>/dev/null || true
-          cp packages/desktop-app/release/*.blockmap dist-release/ 2>/dev/null || true
+          # Demo app: drop the version from file names so download links stay stable.
+          V=$(node -p "require('./packages/desktop-app/package.json').version")
+          for f in packages/desktop-app/release/*.{dmg,zip,blockmap}; do
+            [ -f "$f" ] || continue
+            n=$(basename "$f"); n=${n//-$V/}; n=${n// $V/}; n=${n//.$V/}
+            cp "$f" "dist-release/$n"
+          done
           ls -lh dist-release/
 
       - name: Upload macOS Artifacts
@@ -202,9 +206,13 @@ jobs:
           cp packages/studio/release/*.exe dist-release/ 2>/dev/null || true
           cp packages/studio/release/*.zip dist-release/ 2>/dev/null || true
           cp packages/studio/release/*.blockmap dist-release/ 2>/dev/null || true
-          cp packages/desktop-app/release/*.exe dist-release/ 2>/dev/null || true
-          cp packages/desktop-app/release/*.zip dist-release/ 2>/dev/null || true
-          cp packages/desktop-app/release/*.blockmap dist-release/ 2>/dev/null || true
+          # Demo app: drop the version from file names so download links stay stable.
+          V=$(node -p "require('./packages/desktop-app/package.json').version")
+          for f in packages/desktop-app/release/*.{exe,zip,blockmap}; do
+            [ -f "$f" ] || continue
+            n=$(basename "$f"); n=${n//-$V/}; n=${n// $V/}; n=${n//.$V/}
+            cp "$f" "dist-release/$n"
+          done
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
@@ -247,7 +255,9 @@ jobs:
           merge-multiple: true
 
       - name: Pack npm package tarball
-        run: npm pack --workspace=@vecvel/drm-wrap --pack-destination release-dist
+        run: |
+          npm pack --workspace=@vecvel/drm-wrap --pack-destination release-dist
+          mv release-dist/vecvel-drm-wrap-*.tgz release-dist/drm-wrap-cli.tgz
 
       - name: Publish npm package to GitHub Packages
         run: |
