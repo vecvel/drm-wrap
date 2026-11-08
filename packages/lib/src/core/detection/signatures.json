@@ -1,0 +1,106 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-09-27T00:00:00.000Z",
+  "signatures": [
+    {
+      "id": "obs-studio",
+      "name": "OBS Studio",
+      "category": "screen-recorder",
+      "platforms": ["win32", "darwin"],
+      "processNames": ["obs", "obs64", "obs32"],
+      "windowTitlePatterns": ["obs studio", "obs 2"]
+    },
+    {
+      "id": "xbox-game-bar",
+      "name": "Xbox Game Bar",
+      "category": "game-bar",
+      "platforms": ["win32"],
+      "processNames": ["gamebar", "gamebarft", "gamebarpresencewriter"],
+      "windowTitlePatterns": ["game bar"]
+    },
+    {
+      "id": "snipping-tool",
+      "name": "Snipping Tool",
+      "category": "screenshot-tool",
+      "platforms": ["win32"],
+      "processNames": ["snippingtool", "screenclippinghost"],
+      "windowTitlePatterns": ["snipping tool", "snip & sketch"]
+    },
+    {
+      "id": "sharex",
+      "name": "ShareX",
+      "category": "screenshot-tool",
+      "platforms": ["win32"],
+      "processNames": ["sharex"],
+      "windowTitlePatterns": ["sharex"]
+    },
+    {
+      "id": "greenshot",
+      "name": "Greenshot",
+      "category": "screenshot-tool",
+      "platforms": ["win32"],
+      "processNames": ["greenshot"],
+      "windowTitlePatterns": ["greenshot"]
+    },
+    {
+      "id": "lightshot",
+      "name": "Lightshot",
+      "category": "screenshot-tool",
+      "platforms": ["win32", "darwin"],
+      "processNames": ["lightshot"],
+      "windowTitlePatterns": ["lightshot"]
+    },
+    {
+      "id": "quicktime-player",
+      "name": "QuickTime Player",
+      "category": "screen-recorder",
+      "platforms": ["darwin"],
+      "processNames": ["quicktime player"],
+      "windowTitlePatterns": ["screen recording"]
+    },
+    {
+      "id": "macos-screenshot",
+      "name": "macOS Screenshot Utility",
+      "category": "screenshot-tool",
+      "platforms": ["darwin"],
+      "processNames": ["screenshot", "screencapture"],
+      "windowTitlePatterns": []
+    },
+    {
+      "id": "discord",
+      "name": "Discord Screen Share",
+      "category": "meeting-app",
+      "platforms": ["win32", "darwin"],
+      "processNames": ["discord"],
+      "windowTitlePatterns": ["screen share", "discord"],
+      "triggersInvisibleMode": true
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom",
+      "category": "meeting-app",
+      "platforms": ["win32", "darwin"],
+      "processNames": ["zoom", "cpthost"],
+      "windowTitlePatterns": ["zoom meeting", "screen share", "you are screen sharing"],
+      "triggersInvisibleMode": true
+    },
+    {
+      "id": "microsoft-teams",
+      "name": "Microsoft Teams",
+      "category": "meeting-app",
+      "platforms": ["win32", "darwin"],
+      "processNames": ["teams", "ms-teams", "msteams"],
+      "windowTitlePatterns": ["microsoft teams", "you are presenting"],
+      "triggersInvisibleMode": true
+    },
+    {
+      "id": "google-meet",
+      "name": "Google Meet (browser)",
+      "category": "meeting-app",
+      "platforms": ["win32", "darwin"],
+      "processNames": ["chrome", "msedge", "firefox"],
+      "windowTitlePatterns": ["meet.google.com", "presenting to everyone", "you are presenting"],
+      "triggersInvisibleMode": true
+    }
+  ]
+}

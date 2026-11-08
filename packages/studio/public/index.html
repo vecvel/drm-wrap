@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DRMWrap</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="titlebar">
+    <img src="logo.png" alt="" />
+    <span>DRMWrap</span>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+  <main id="app"></main>
+
+  <script src="app.js"></script>
+  <script src="screens/license.js"></script>
+  <script src="screens/license-details.js"></script>
+  <script src="screens/wizard.js"></script>
+  <script src="screens/dashboard.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", () => window.DRMStudio.boot());
+  </script>
+</body>
+</html>

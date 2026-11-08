@@ -1,0 +1,71 @@
+appId: com.drmwrap.gui
+productName: DRMWrap
+copyright: Copyright © 2026 vecvel. All rights reserved.
+electronVersion: 31.7.7
+npmRebuild: false
+directories:
+  output: release
+  buildResources: public
+files:
+  - electron/**/*
+  - public/**/*
+  - node_modules/**/*
+  - package.json
+# The desktop-app template MUST live outside the ASAR archive.
+# Electron patches fs.readFile/readdir for ASAR but NOT opendir(), which
+# fs-extra's copy() uses internally — causing ENOTDIR on scaffold. Placing it
+# as an extraResource means it's a real directory on disk that Node can opendir.
+extraResources:
+  # @vecvel/drm-wrap is hoisted to the monorepo root node_modules by npm
+  # workspaces, so it does NOT exist inside packages/studio/node_modules.
+  # Point directly at the lib's templates/ folder (built by `npm run build`).
+  # Path is relative to packages/studio/ (the electron-builder project root).
+  - from: ../lib/templates
+    to: drm-wrap-templates
+    filter:
+      - "**/*"
+      - "!**/node_modules/**"
+      - "!**/dist/**"
+      - "!**/release/**"
+asar: true
+# Fixed file names (no version) so the README's releases/latest/download
+# links keep working for every release.
+mac:
+  artifactName: DRMWrap-mac-${arch}.${ext}
+  category: public.app-category.developer-tools
+  icon: public/logo.icns
+  hardenedRuntime: true
+  minimumSystemVersion: "12.0"
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.inherit.plist
+  gatekeeperAssess: false
+  notarize:
+    teamId: "63LNPXAB49"
+  target:
+    - target: dmg
+      arch:
+        - universal
+    - target: zip
+      arch:
+        - universal
+win:
+  artifactName: DRMWrap-win-${arch}.${ext}
+  icon: public/logo.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+    - target: zip
+      arch:
+        - x64
+portable:
+  artifactName: DRMWrap-Portable-win-${arch}.${ext}
+nsis:
+  artifactName: DRMWrap-Setup-win-${arch}.${ext}
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

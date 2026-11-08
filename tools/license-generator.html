@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRM-Wrap License Generator</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23000000'/%3E%3Cpath d='M256 96L128 152V256C128 340 184 416 256 440C328 416 384 340 384 256V152L256 96Z' fill='%23ffffff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: #000000;
+      --card-border: #262626;
+      --card-alt: #0a0a0a;
+      --primary: #ffffff;
+      --primary-hover: #e5e5e5;
+      --primary-text: #000000;
+      --text: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.75);
+      --text-subtle: rgba(255, 255, 255, 0.45);
+      --input-bg: #000000;
+      --input-border: #262626;
+      --input-focus: #ffffff;
+      --radius: 4px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 580px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--card-bg);
+    }
+
+    .card-header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0 16px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-subtle);
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s ease;
+    }
+
+    .tab-btn.active {
+      color: #ffffff;
+      border-bottom: 2px solid #ffffff;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: #ffffff;
+    }
+
+    .card-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    input, select, textarea {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 400;
+      outline: none !important;
+      box-shadow: none !important;
+      width: 100%;
+      transition: border-color 0.15s ease;
+      -webkit-appearance: none;
+    }
+
+    input:focus, input:focus-visible, select:focus, select:focus-visible, textarea:focus, textarea:focus-visible,
+    button:focus, button:focus-visible {
+      border-color: var(--input-focus);
+      outline: none !important;
+      outline-offset: 0 !important;
+      box-shadow: none !important;
+      -webkit-focus-ring-color: transparent !important;
+    }
+
+    /* Custom Chevron Down for Select in Pure Black & White */
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: calc(100% - 12px) center;
+      background-size: 12px 12px;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+
+    select option {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    textarea {
+      font-family: var(--font);
+      font-size: 11px;
+      line-height: 1.5;
+      resize: vertical;
+      min-height: 68px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 500px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .btn {
+      font-family: var(--font);
+      background: var(--primary);
+      color: var(--primary-text);
+      border: 1px solid #ffffff;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: #000000;
+      border: 1px solid var(--card-border);
+      color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+      background: #111111;
+      border-color: #ffffff;
+    }
+
+    .btn-outline {
+      background: #000000;
+      border: 1px solid #ffffff;
+      color: #ffffff;
+    }
+
+    .btn-outline:hover {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    .btn-sm {
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    .result-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .result-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      font-size: 12px;
+      background: #000000;
+      border: 1px solid var(--card-border);
+      padding: 12px;
+      border-radius: var(--radius);
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .summary-item span:first-child {
+      color: var(--text-subtle);
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .summary-item span:last-child {
+      color: #ffffff;
+      font-weight: 600;
+      font-family: var(--font);
+      word-break: break-all;
+    }
+
+    .token-box {
+      font-family: var(--font);
+      font-size: 11px;
+      background: #000000;
+      border: 1px solid var(--card-border);
+      color: #ffffff;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      word-break: break-all;
+      user-select: all;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .cli-bar {
+      background: #000000;
+      border: 1px solid var(--card-border);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .cli-bar .cli-cmd {
+      font-family: var(--font);
+      color: #ffffff;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .card-footer {
+      padding: 12px 24px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--card-border);
+      font-size: 11px;
+      color: var(--text-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-footer a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="card">
+      
+      <!-- Card Header -->
+      <div class="card-header">
+        <h1>DRM-Wrap License Generator</h1>
+        <p>Offline Ed25519 Cryptographic Licensing Tool</p>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="tabs">
+        <button type="button" class="tab-btn active" id="tabGenBtn" onclick="switchTab('gen')">Issue License</button>
+        <button type="button" class="tab-btn" id="tabVerifyBtn" onclick="switchTab('verify')">Verify License</button>
+      </div>
+
+      <!-- Tab 1: License Generator Form -->
+      <div id="genTabContent" class="card-body">
+        
+        <!-- Private Key Input -->
+        <div class="form-group">
+          <div class="label-row">
+            <label>Vendor Private Key (PKCS#8 PEM)</label>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearStoredKey()">Clear Key</button>
+          </div>
+          <textarea id="privateKeyInput" rows="3" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+        </div>
+
+        <!-- Customer & Email -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Customer Name</label>
+            <input type="text" id="customerInput" placeholder="e.g. Acme Corp" required>
+          </div>
+          <div class="form-group">
+            <label>Customer Email</label>
+            <input type="email" id="emailInput" placeholder="e.g. dev@acme.com" required>
+          </div>
+        </div>
+
+        <!-- Tier & Domain -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label>License Tier</label>
+            <select id="tierSelect">
+              <option value="single">Single Application</option>
+              <option value="extended">Extended Distribution</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Domain Lock (Optional)</label>
+            <input type="text" id="domainInput" placeholder="e.g. acme.com">
+          </div>
+        </div>
+
+        <!-- Validity & Duration -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Validity</label>
+            <select id="validityTypeSelect" onchange="handleValidityChange()">
+              <option value="subscription" selected>Subscription (365 Days)</option>
+              <option value="perpetual">Lifetime (Never Expires)</option>
+              <option value="trial">Trial (14 Days)</option>
+              <option value="custom_days">Custom Days</option>
+              <option value="short_test">Test (Minutes / Seconds)</option>
+              <option value="specific_date">Specific Date</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="validityDetailGroup">
+            <label id="validityDetailLabel">Duration (Days)</label>
+            <div id="daysWrapper" style="display: flex; gap: 6px;">
+              <input type="number" id="daysInput" value="365" min="1">
+              <select id="timeUnitSelect" style="display: none; width: 110px;">
+                <option value="minutes">Minutes</option>
+                <option value="seconds">Seconds</option>
+              </select>
+            </div>
+            <input type="date" id="dateInput" style="display: none;">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="button" class="btn" onclick="generateLicense()" style="width: 100%; margin-top: 4px;">
+          Generate License Key
+        </button>
+
+        <!-- Result Box -->
+        <div id="resultBox" class="result-card hidden">
+          <div class="result-summary-grid" id="summaryGrid"></div>
+
+          <div class="form-group">
+            <label>License Key</label>
+            <textarea id="tokenOutput" readonly rows="3" class="token-box" onclick="this.select()"></textarea>
+          </div>
+
+          <div class="action-row">
+            <button type="button" class="btn" onclick="downloadLicFile()">Download .lic File</button>
+            <button type="button" class="btn btn-secondary" onclick="copyToken()">Copy License Key</button>
+          </div>
+
+          <div class="cli-bar">
+            <span id="cliActivateCmd" class="cli-cmd">npx drm-wrap license activate &lt;key&gt;</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="copyCliCmd()">Copy</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab 2: Verify License -->
+      <div id="verifyTabContent" class="card-body hidden">
+        <div class="form-group">
+          <label>License Token</label>
+          <textarea id="inspectTokenInput" rows="3" placeholder="Paste token here..."></textarea>
+        </div>
+
+        <button type="button" class="btn btn-secondary" onclick="verifyAndInspectToken()">
+          Verify Signature
+        </button>
+
+        <div id="inspectResultBox" class="result-card hidden">
+          <div class="result-summary-grid" id="inspectGrid"></div>
+          <div id="inspectRawJson" style="white-space: pre-wrap; word-break: break-all; font-family: var(--font); font-size: 12px; background: #000000; border: 1px solid var(--card-border); padding: 10px; border-radius: 4px; color: #ffffff; overflow-x: auto;"></div>
+        </div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <span>Proprietary &copy; 2026 @vecvel</span>
+        <a href="https://github.com/vecvel/drm-wrap" target="_blank" rel="noopener">GitHub</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'drmwrap_dev_private_key';
+    const EMBEDDED_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAXmXJSCjIdFJZFhyxnjYERSz8Ybz6eBA57TrdbHZTFlc=
+-----END PUBLIC KEY-----`;
+
+    let currentLicenseDoc = null;
+    let currentToken = '';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedKey = localStorage.getItem(STORAGE_KEY);
+      if (savedKey) {
+        document.getElementById('privateKeyInput').value = savedKey;
+      }
+    });
+
+    document.getElementById('privateKeyInput').addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val) {
+        localStorage.setItem(STORAGE_KEY, val);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    });
+
+    function clearStoredKey() {
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('privateKeyInput').value = '';
+    }
+
+    function switchTab(tab) {
+      const genBtn = document.getElementById('tabGenBtn');
+      const verifyBtn = document.getElementById('tabVerifyBtn');
+      const genContent = document.getElementById('genTabContent');
+      const verifyContent = document.getElementById('verifyTabContent');
+
+      if (tab === 'gen') {
+        genBtn.classList.add('active');
+        verifyBtn.classList.remove('active');
+        genContent.classList.remove('hidden');
+        verifyContent.classList.add('hidden');
+      } else {
+        verifyBtn.classList.add('active');
+        genBtn.classList.remove('active');
+        verifyContent.classList.remove('hidden');
+        genContent.classList.add('hidden');
+      }
+    }
+
+    function handleValidityChange() {
+      const val = document.getElementById('validityTypeSelect').value;
+      const detailGroup = document.getElementById('validityDetailGroup');
+      const detailLabel = document.getElementById('validityDetailLabel');
+      const daysWrapper = document.getElementById('daysWrapper');
+      const daysInput = document.getElementById('daysInput');
+      const timeUnitSelect = document.getElementById('timeUnitSelect');
+      const dateInput = document.getElementById('dateInput');
+
+      if (val === 'perpetual') {
+        detailGroup.style.display = 'none';
+      } else if (val === 'subscription') {
+        detailGroup.style.display = 'flex';
+        detailLabel.textContent = 'Duration (Days)';
+        daysWrapper.style.display = 'flex';
+        timeUnitSelect.style.display = 'none';
+        daysInput.value = '365';
+        dateInput.style.display = 'none';
+      } else if (val === 'trial') {
+        detailGroup.style.display = 'flex';
+        detailLabel.textContent = 'Trial (Days)';
+        daysWrapper.style.display = 'flex';
+        timeUnitSelect.style.display = 'none';
+        daysInput.value = '14';
+        dateInput.style.display = 'none';
+      } else if (val === 'custom_days') {
+        detailGroup.style.display = 'flex';
+        detailLabel.textContent = 'Custom Days';
+        daysWrapper.style.display = 'flex';
+        timeUnitSelect.style.display = 'none';
+        dateInput.style.display = 'none';
+      } else if (val === 'short_test') {
+        detailGroup.style.display = 'flex';
+        detailLabel.textContent = 'Test Validity';
+        daysWrapper.style.display = 'flex';
+        timeUnitSelect.style.display = 'block';
+        daysInput.value = '5';
+        dateInput.style.display = 'none';
+      } else if (val === 'specific_date') {
+        detailGroup.style.display = 'flex';
+        detailLabel.textContent = 'Expiry Date';
+        daysWrapper.style.display = 'none';
+        dateInput.style.display = 'block';
+        const defaultDate = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().split('T')[0];
+        dateInput.value = defaultDate;
+      }
+    }
+
+    function pemToBinary(pem) {
+      const lines = pem.trim().split(/\r?\n/);
+      const clean = lines.filter(l => !l.startsWith('-----')).join('');
+      const binary = atob(clean);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    function uint8ArrayToBase64(bytes) {
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function base64UrlEncode(bytes) {
+      return uint8ArrayToBase64(bytes)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    function base64UrlDecode(str) {
+      let normalized = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (normalized.length % 4) {
+        normalized += '=';
+      }
+      const binary = atob(normalized);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    async function generateLicense() {
+      const pem = document.getElementById('privateKeyInput').value.trim();
+      const customer = document.getElementById('customerInput').value.trim();
+      const email = document.getElementById('emailInput').value.trim();
+      const tier = document.getElementById('tierSelect').value;
+      const domain = document.getElementById('domainInput').value.trim().toLowerCase();
+      const validityType = document.getElementById('validityTypeSelect').value;
+
+      if (!pem) {
+        alert('Please enter your vendor Ed25519 Private Key.');
+        return;
+      }
+      if (!customer || !email) {
+        alert('Customer Name and Customer Email are required.');
+        return;
+      }
+
+      let expiresAt = null;
+      const now = new Date();
+
+      if (validityType === 'perpetual') {
+        expiresAt = null;
+      } else if (validityType === 'short_test') {
+        const unit = document.getElementById('timeUnitSelect').value;
+        const count = parseInt(document.getElementById('daysInput').value, 10) || 2;
+        const ms = unit === 'seconds' ? count * 1000 : count * 60 * 1000;
+        expiresAt = new Date(now.getTime() + ms).toISOString();
+      } else if (validityType === 'specific_date') {
+        const d = document.getElementById('dateInput').value;
+        if (!d) {
+          alert('Please pick an expiry date.');
+          return;
+        }
+        expiresAt = new Date(d + 'T23:59:59.999Z').toISOString();
+      } else {
+        const days = parseInt(document.getElementById('daysInput').value, 10) || 365;
+        expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      try {
+        const keyDer = pemToBinary(pem);
+        const privateKey = await crypto.subtle.importKey(
+          'pkcs8',
+          keyDer,
+          { name: 'Ed25519' },
+          false,
+          ['sign']
+        );
+
+        const payload = {
+          licenseId: crypto.randomUUID ? crypto.randomUUID() : 'lic_' + Math.random().toString(36).substring(2, 12),
+          customer,
+          email,
+          tier,
+          issuedAt: now.toISOString(),
+          expiresAt
+        };
+
+        if (domain) {
+          payload.domain = domain;
+        }
+
+        const payloadJson = JSON.stringify(payload);
+        const payloadBytes = new TextEncoder().encode(payloadJson);
+        const payload64 = base64UrlEncode(payloadBytes);
+
+        const dataToSign = new TextEncoder().encode(payload64);
+        const sigBuffer = await crypto.subtle.sign({ name: 'Ed25519' }, privateKey, dataToSign);
+        const signature64 = base64UrlEncode(new Uint8Array(sigBuffer));
+
+        const token = `${payload64}.${signature64}`;
+        currentToken = token;
+        currentLicenseDoc = { token, ...payload };
+
+        const grid = document.getElementById('summaryGrid');
+        grid.innerHTML = `
+          <div class="summary-item">
+            <span>Customer</span>
+            <span>${payload.customer}</span>
+          </div>
+          <div class="summary-item">
+            <span>Email</span>
+            <span>${payload.email}</span>
+          </div>
+          <div class="summary-item">
+            <span>Tier</span>
+            <span>${payload.tier.toUpperCase()}</span>
+          </div>
+          <div class="summary-item">
+            <span>Domain</span>
+            <span>${payload.domain || 'Unrestricted'}</span>
+          </div>
+          <div class="summary-item">
+            <span>Expires</span>
+            <span>${payload.expiresAt ? new Date(payload.expiresAt).toLocaleDateString() : 'Never (Lifetime)'}</span>
+          </div>
+          <div class="summary-item">
+            <span>License ID</span>
+            <span>${payload.licenseId}</span>
+          </div>
+        `;
+
+        document.getElementById('tokenOutput').value = token;
+        document.getElementById('cliActivateCmd').textContent = `npx drm-wrap license activate "${token}"`;
+        document.getElementById('resultBox').classList.remove('hidden');
+
+      } catch (err) {
+        console.error(err);
+        alert('Failed to generate license: ' + err.message);
+      }
+    }
+
+    function downloadLicFile() {
+      if (!currentLicenseDoc) return;
+      const json = JSON.stringify(currentLicenseDoc, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safe = currentLicenseDoc.customer.replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.href = url;
+      a.download = `${safe}_DRMWrap_License.lic`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyToken() {
+      if (!currentToken) return;
+      navigator.clipboard.writeText(currentToken);
+      alert('License key copied to clipboard.');
+    }
+
+    function copyCliCmd() {
+      if (!currentToken) return;
+      const cmd = `npx drm-wrap license activate "${currentToken}"`;
+      navigator.clipboard.writeText(cmd);
+      alert('CLI activation command copied to clipboard.');
+    }
+
+    async function verifyAndInspectToken() {
+      const input = document.getElementById('inspectTokenInput').value.trim();
+      const resultBox = document.getElementById('inspectResultBox');
+      const grid = document.getElementById('inspectGrid');
+      const raw = document.getElementById('inspectRawJson');
+
+      if (!input) {
+        alert('Please paste a license token.');
+        return;
+      }
+
+      const parts = input.split('.');
+      if (parts.length !== 2) {
+        alert('Malformed token format. Expected <payload64>.<signature64>');
+        return;
+      }
+
+      try {
+        const payloadBytes = base64UrlDecode(parts[0]);
+        const sigBytes = base64UrlDecode(parts[1]);
+        const payloadJson = new TextDecoder().decode(payloadBytes);
+        const payload = JSON.parse(payloadJson);
+
+        const pubDer = pemToBinary(EMBEDDED_PUBLIC_KEY_PEM);
+        const pubKey = await crypto.subtle.importKey(
+          'spki',
+          pubDer,
+          { name: 'Ed25519' },
+          false,
+          ['verify']
+        );
+
+        const dataBytes = new TextEncoder().encode(parts[0]);
+        const isValidSig = await crypto.subtle.verify({ name: 'Ed25519' }, pubKey, sigBytes, dataBytes);
+        const isExpired = payload.expiresAt && new Date(payload.expiresAt).getTime() < Date.now();
+
+        resultBox.classList.remove('hidden');
+
+        grid.innerHTML = `
+          <div class="summary-item">
+            <span>Customer</span>
+            <span>${payload.customer || '-'}</span>
+          </div>
+          <div class="summary-item">
+            <span>Email</span>
+            <span>${payload.email || '-'}</span>
+          </div>
+          <div class="summary-item">
+            <span>Tier</span>
+            <span>${(payload.tier || 'single').toUpperCase()}</span>
+          </div>
+          <div class="summary-item">
+            <span>Domain</span>
+            <span>${payload.domain || 'Unrestricted'}</span>
+          </div>
+          <div class="summary-item">
+            <span>Status</span>
+            <span>${isValidSig ? (isExpired ? 'EXPIRED' : 'VALID') : 'INVALID SIGNATURE'}</span>
+          </div>
+          <div class="summary-item">
+            <span>Expires</span>
+            <span>${payload.expiresAt ? new Date(payload.expiresAt).toLocaleDateString() : 'Never'}</span>
+          </div>
+        `;
+
+        raw.textContent = JSON.stringify(payload, null, 2);
+
+      } catch (err) {
+        console.error(err);
+        alert('Failed to parse license token: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

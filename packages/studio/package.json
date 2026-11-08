@@ -1,0 +1,22 @@
+{
+  "name": "drm-wrap-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DRMWrap — the desktop GUI for building DRM-Wrap desktop apps without a terminal.",
+  "author": "vecvel",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development electron .",
+    "start": "electron .",
+    "package": "electron-builder --config electron-builder.yml"
+  },
+  "dependencies": {
+    "@vecvel/drm-wrap": "^1.0.0",
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  }
+}
